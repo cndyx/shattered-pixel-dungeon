@@ -1001,13 +1001,8 @@ public abstract class Mob extends Char {
 				Dungeon.hero.earnExp(exp, getClass());
 				//in the vault level we manually progress ring IDing. 5 enemies defeated to an ID
 				if (exp == 0 && Dungeon.level instanceof VaultLevel){
-					Item ring = Dungeon.hero.belongings.ring();
-					if (ring != null){
-						ring.onHeroGainExp(0.2f, Dungeon.hero);
-					}
-					Item misc = Dungeon.hero.belongings.misc();
-					if (misc instanceof Ring){
-						misc.onHeroGainExp(0.2f, Dungeon.hero);
+					for (Item item : Dungeon.hero.belongings.equippedMiscs()){
+						if (item instanceof Ring) item.onHeroGainExp(0.2f, Dungeon.hero);
 					}
 				}
 

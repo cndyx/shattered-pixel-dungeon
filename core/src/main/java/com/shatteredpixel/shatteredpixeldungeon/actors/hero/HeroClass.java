@@ -47,6 +47,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.warrior.En
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.warrior.HeroicLeap;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.warrior.Shockwave;
 import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
+import com.shatteredpixel.shatteredpixeldungeon.items.KindofMisc;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.Waterskin;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClothArmor;
@@ -142,6 +143,32 @@ public enum HeroClass {
 				break;
 		}
 
+		// Every class starts with the seal, affixed when starting armor is available.
+		if (hero.belongings.armor != null){
+			hero.belongings.armor.affixSeal(new BrokenSeal());
+			Catalog.setSeen(BrokenSeal.class);
+		} else {
+			new BrokenSeal().collect();
+		}
+		if (this != CLERIC){
+			HolyTome tome = new HolyTome();
+			tome.identify();
+			KindofMisc[] slots = hero.belongings.miscSlots();
+			for (int slot = 0; slot < slots.length; slot++){
+				if (slots[slot] == null){
+					hero.belongings.setMiscSlot(slot, tome);
+					break;
+				}
+			}
+			tome.activate(hero);
+			for (int slot = 0; slot < QuickSlot.SIZE; slot++){
+				if (Dungeon.quickslot.getItem(slot) == null){
+					Dungeon.quickslot.setSlot(slot, tome);
+					break;
+				}
+			}
+		}
+
 		if (SPDSettings.quickslotWaterskin()) {
 			for (int s = 0; s < QuickSlot.SIZE; s++) {
 				if (Dungeon.quickslot.getItem(s) == null) {
@@ -178,10 +205,6 @@ public enum HeroClass {
 
 		Dungeon.quickslot.setSlot(0, stones);
 
-		if (hero.belongings.armor != null){
-			hero.belongings.armor.affixSeal(new BrokenSeal());
-			Catalog.setSeen(BrokenSeal.class); //as it's not added to the inventory
-		}
 
 		new PotionOfHealing().identify();
 		new ScrollOfRage().identify();

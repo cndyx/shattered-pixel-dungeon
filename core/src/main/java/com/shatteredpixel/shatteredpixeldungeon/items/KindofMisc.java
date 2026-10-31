@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HolyTome;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -40,49 +41,15 @@ public abstract class KindofMisc extends EquipableItem {
 	@Override
 	public boolean doEquip(final Hero hero) {
 
-		boolean equipFull = false;
-		if ( this instanceof Artifact
-				&& hero.belongings.artifact != null
-				&& hero.belongings.misc != null){
-
-			//see if we can re-arrange items first
-			if (hero.belongings.misc instanceof Ring && hero.belongings.ring == null){
-				hero.belongings.ring = (Ring) hero.belongings.misc;
-				hero.belongings.misc = null;
-			} else {
-				equipFull = true;
-			}
-		} else if (this instanceof Ring
-				&& hero.belongings.misc != null
-				&& hero.belongings.ring != null){
-
-			//see if we can re-arrange items first
-			if (hero.belongings.misc instanceof Artifact && hero.belongings.artifact == null){
-				hero.belongings.artifact = (Artifact) hero.belongings.misc;
-				hero.belongings.misc = null;
-			} else {
-				equipFull = true;
-			}
+		if (isEquipped(hero)) return false;
+		boolean equipFull = true;
+		for (KindofMisc item : hero.belongings.miscSlots()){
+			if (item == null) equipFull = false;
 		}
 
 		if (equipFull) {
 
-			final KindofMisc[] miscs = new KindofMisc[3];
-			miscs[0] = hero.belongings.artifact;
-			miscs[1] = hero.belongings.misc;
-			miscs[2] = hero.belongings.ring;
-
-			final boolean[] enabled = new boolean[3];
-			enabled[0] = miscs[0] != null;
-			enabled[1] = miscs[1] != null;
-			enabled[2] = miscs[2] != null;
-
-			//force swapping with the same type of item if 2x of that type is already present
-			if (this instanceof Ring && hero.belongings.misc instanceof Ring){
-				enabled[0] = false; //disable artifact
-			} else if (this instanceof Artifact && hero.belongings.misc instanceof Artifact){
-				enabled[2] = false; //disable ring
-			}
+			final KindofMisc[] miscs = hero.belongings.miscSlots();
 
 			GameScene.show(
 					new WndOptions(new ItemSprite(this),
@@ -90,7 +57,8 @@ public abstract class KindofMisc extends EquipableItem {
 							Messages.get(KindofMisc.class, "unequip_message"),
 							miscs[0] == null ? "---" : Messages.titleCase(miscs[0].title()),
 							miscs[1] == null ? "---" : Messages.titleCase(miscs[1].title()),
-							miscs[2] == null ? "---" : Messages.titleCase(miscs[2].title())) {
+							miscs[2] == null ? "---" : Messages.titleCase(miscs[2].title()),
+							miscs[3] == null ? "---" : Messages.titleCase(miscs[3].title())) {
 
 						@Override
 						protected void onSelect(int index) {
@@ -103,14 +71,7 @@ public abstract class KindofMisc extends EquipableItem {
 							slotOfUnequipped = -1;
 							Dungeon.hero.belongings.backpack.items.remove(KindofMisc.this);
 							if (equipped.doUnequip(hero, true, false)) {
-								//swap out equip in misc slot if needed
-								if (index == 0 && KindofMisc.this instanceof Ring){
-									hero.belongings.artifact = (Artifact)hero.belongings.misc;
-									hero.belongings.misc = null;
-								} else if (index == 2 && KindofMisc.this instanceof Artifact){
-									hero.belongings.ring = (Ring) hero.belongings.misc;
-									hero.belongings.misc = null;
-								}
+
 								Dungeon.hero.belongings.backpack.items.add(KindofMisc.this);
 								doEquip(hero);
 							} else {
@@ -126,7 +87,7 @@ public abstract class KindofMisc extends EquipableItem {
 
 						@Override
 						protected boolean enabled(int index) {
-							return enabled[index];
+							return miscs[index] != null;
 						}
 					});
 
@@ -135,7 +96,7 @@ public abstract class KindofMisc extends EquipableItem {
 		} else {
 
 			// 15/25% chance
-			if (hero.heroClass != HeroClass.CLERIC && hero.hasTalent(Talent.HOLY_INTUITION)
+			if (hero.belongings.getItem(HolyTome.class) == null && hero.hasTalent(Talent.HOLY_INTUITION)
 					&& cursed && !cursedKnown
 					&& Random.Int(20) < 1 + 2*hero.pointsInTalent(Talent.HOLY_INTUITION)){
 				cursedKnown = true;
@@ -143,12 +104,12 @@ public abstract class KindofMisc extends EquipableItem {
 				return false;
 			}
 
-			if (this instanceof Artifact){
-				if (hero.belongings.artifact == null)   hero.belongings.artifact = (Artifact) this;
-				else                                    hero.belongings.misc = (Artifact) this;
-			} else if (this instanceof Ring){
-				if (hero.belongings.ring == null)   hero.belongings.ring = (Ring) this;
-				else                                hero.belongings.misc = (Ring) this;
+			KindofMisc[] slots = hero.belongings.miscSlots();
+			for (int i = 0; i < slots.length; i++){
+				if (slots[i] == null){
+					hero.belongings.setMiscSlot(i, this);
+					break;
+				}
 			}
 
 			detach( hero.belongings.backpack );
@@ -173,12 +134,9 @@ public abstract class KindofMisc extends EquipableItem {
 	public boolean doUnequip(Hero hero, boolean collect, boolean single) {
 		if (super.doUnequip(hero, collect, single)){
 
-			if (hero.belongings.artifact == this) {
-				hero.belongings.artifact = null;
-			} else if (hero.belongings.misc == this) {
-				hero.belongings.misc = null;
-			} else if (hero.belongings.ring == this){
-				hero.belongings.ring = null;
+			KindofMisc[] slots = hero.belongings.miscSlots();
+			for (int i = 0; i < slots.length; i++){
+				if (slots[i] == this) hero.belongings.setMiscSlot(i, null);
 			}
 
 			return true;
@@ -192,9 +150,7 @@ public abstract class KindofMisc extends EquipableItem {
 
 	@Override
 	public boolean isEquipped( Hero hero ) {
-		return hero != null && (hero.belongings.artifact() == this
-				|| hero.belongings.misc() == this
-				|| hero.belongings.ring() == this);
+		return hero != null && hero.belongings.equippedMiscs().contains(this);
 	}
 
 }

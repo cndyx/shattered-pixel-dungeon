@@ -93,7 +93,7 @@ public class Bones {
 		}
 
 		if (Random.Int(3) != 0) {
-			switch (Random.Int(7)) {
+			switch (Random.Int(8)) {
 				case 0:
 					item = hero.belongings.weapon;
 					//if the hero has two weapons (champion), pick the stronger one
@@ -115,7 +115,10 @@ public class Bones {
 				case 4:
 					item = hero.belongings.ring;
 					break;
-				case 5: case 6:
+				case 5:
+					item = hero.belongings.misc2;
+					break;
+				case 6: case 7:
 					item = Dungeon.quickslot.randomNonePlaceholder();
 					break;
 			}
