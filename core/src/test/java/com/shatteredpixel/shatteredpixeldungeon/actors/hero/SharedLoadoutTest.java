@@ -10,6 +10,10 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.Cleanse;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.Sunray;
 import com.watabou.utils.Bundle;
 import org.junit.After;
+import org.junit.BeforeClass;
+import com.badlogic.gdx.utils.GdxNativesLoader;
+import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.watabou.gltextures.TextureCache;
 import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -17,6 +21,31 @@ import java.util.LinkedHashMap;
 import static org.junit.Assert.*;
 
 public class SharedLoadoutTest {
+    @BeforeClass public static void prepareIconAtlas(){
+        // Ring constructors reference the icon atlas. No GL context is needed for its dimensions.
+        GdxNativesLoader.load();
+        TextureCache.create(Assets.Sprites.ITEM_ICONS, 256, 256);
+    }
+
+    public static class TestHero extends Hero {
+        @Override public void spendAndNext(float time){ spend(time); }
+    }
+
+    @Test public void fourEquippedRingsApplyAndRemoveTheirActualBuffs(){
+        TestHero hero = new TestHero();
+        Dungeon.hero = hero;
+        RingOfMight[] rings = new RingOfMight[4];
+        for (int i=0; i<4; i++){
+            rings[i] = new RingOfMight();
+            assertTrue(rings[i].doEquip(hero));
+        }
+        assertEquals(4, hero.belongings.equippedMiscs().size());
+        assertEquals(4, RingOfMight.strengthBonus(hero));
+        assertTrue(rings[3].doUnequip(hero, false, false));
+        assertNull(hero.belongings.misc2);
+        assertEquals(3, RingOfMight.strengthBonus(hero));
+    }
+
     @After public void cleanup(){ Dungeon.hero = null; }
 
     @Test public void sharedTalentsAreAvailableToEveryClassAndDoNotResetPoints(){
