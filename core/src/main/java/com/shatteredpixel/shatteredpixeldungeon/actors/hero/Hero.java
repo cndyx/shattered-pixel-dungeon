@@ -395,10 +395,13 @@ public class Hero extends Char {
 			|| (tier == 3 && subClass == HeroSubClass.NONE)
 			|| (tier == 4 && armorAbility == null)) {
 			return 0;
-		} else if (lvl >= Talent.tierLevelThresholds[tier+1]){
-			return Talent.tierLevelThresholds[tier+1] - Talent.tierLevelThresholds[tier] - talentPointsSpent(tier) + bonusTalentPoints(tier);
 		} else {
-			return 1 + lvl - Talent.tierLevelThresholds[tier] - talentPointsSpent(tier) + bonusTalentPoints(tier);
+			// Keep every unlocked talent affordable, and stop random allocation when all are maxed.
+			int remaining = 0;
+			for (Talent talent : talents.get(tier-1).keySet()){
+				remaining += Math.max(0, talent.maxPoints() - talents.get(tier-1).get(talent));
+			}
+			return remaining;
 		}
 	}
 
