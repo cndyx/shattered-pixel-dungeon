@@ -129,6 +129,8 @@ public class CrystalChoiceRoom extends SpecialRoom {
 		//opening the chest is optional, so it doesn't count for exploration bonus
 		chest.autoExplored = true;
 
+		// Supply one crystal key for each of the two crystal doors.
+		level.addItemToSpawn( new CrystalKey( Dungeon.depth ) );
 		level.addItemToSpawn( new CrystalKey( Dungeon.depth ) );
 
 		entrance().set( Door.Type.LOCKED );

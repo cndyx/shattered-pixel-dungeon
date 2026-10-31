@@ -79,6 +79,8 @@ public class CrystalVaultRoom extends SpecialRoom {
 			level.mobs.add(Mimic.spawnAt(i2Pos, CrystalMimic.class, i2));
 		} else {
 			level.drop(i2, i2Pos).type = Heap.Type.CRYSTAL_CHEST;
+			// A second real chest needs its own key; a crystal mimic does not.
+			level.addItemToSpawn( new CrystalKey( Dungeon.depth ) );
 		}
 		Painter.set(level, i1Pos, Terrain.PEDESTAL);
 		Painter.set(level, i2Pos, Terrain.PEDESTAL);

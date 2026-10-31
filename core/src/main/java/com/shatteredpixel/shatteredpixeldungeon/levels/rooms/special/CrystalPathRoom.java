@@ -243,9 +243,10 @@ public class CrystalPathRoom extends SpecialRoom {
 		level.drop(potions.remove(0), shuffle == 1 ? prize1 : prize2).autoExplored = true;
 		level.drop(scrolls.remove(0), shuffle == 1 ? prize2 : prize1).autoExplored = true;
 
-		level.addItemToSpawn( new CrystalKey( Dungeon.depth ) );
-		level.addItemToSpawn( new CrystalKey( Dungeon.depth ) );
-		level.addItemToSpawn( new CrystalKey( Dungeon.depth ) );
+		// Each reward chamber has one crystal door.
+		for (int i = 0; i < rooms.length; i++){
+			level.addItemToSpawn( new CrystalKey( Dungeon.depth ) );
+		}
 
 		entrance().set( Door.Type.REGULAR );
 
